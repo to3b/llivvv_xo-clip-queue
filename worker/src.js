@@ -50,7 +50,7 @@ function summarise(reviews) {
     if (!s || !['include','maybe','skip'].includes(r.choice)) continue;
     s[r.choice]++;
     s.total++;
-    s.notes.push({name:r.name,choice:r.choice,note:r.note,updatedAt:r.updated_at});
+    s.notes.push({name:r.name,reviewerId:r.reviewer_id,choice:r.choice,note:r.note,updatedAt:r.updated_at});
     let person = people.get(r.reviewer_id);
     if (!person) {person={id:r.reviewer_id,name:r.name,total:0,include:0,maybe:0,skip:0};people.set(r.reviewer_id,person);}
     person.name = r.name;person.total++;person[r.choice]++;
