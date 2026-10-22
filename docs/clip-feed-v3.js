@@ -3,11 +3,14 @@ const $=id=>document.getElementById(id);
 const ROOT=String(window.LIV_API_URL||'').replace(/\/$/,'');
 const id=localStorage.getItem('liv_reviewer_id')||crypto.randomUUID();localStorage.setItem('liv_reviewer_id',id);
 let clips=[],mine=new Map(),list=[],index=0,busy=false;
+const hash=s=>{let h=2166136261;for(let i=0;i<s.length;i++){h=Math.imul(h^s.charCodeAt(i),16777619)}return h>>>0};
+const shuffleScore=c=>hash(id+'|'+c.id);
+
 const name=()=>localStorage.getItem('liv_reviewer_name')||'Anonymous';
 function message(t){$('toast').textContent=t;$('toast').style.display='block';setTimeout(()=>$('toast').style.display='none',2200)}
 async function api(path,opts={}){const r=await fetch(ROOT+path,{...opts,headers:{'X-Reviewer-Id':id,...opts.headers}});const j=await r.json();if(!r.ok)throw Error(j.error||'Server error');return j}
 function current(){return list[index]}
-function order(){let old=current()?.id;list=clips.filter(c=>!$('unreviewed').checked||!mine.has(c.id));let s=$('order').value;list.sort((a,b)=>s==='views'?b.views-a.views:s==='newest'?b.createdAt.localeCompare(a.createdAt):a.createdAt.localeCompare(b.createdAt));index=Math.max(0,list.findIndex(c=>c.id===old));show()}
+function order(){let old=current()?.id;list=clips.filter(c=>!$('unreviewed').checked||!mine.has(c.id));let s=$('order').value;list.sort((a,b)=>s==='views'?b.views-a.views:s==='newest'?b.createdAt.localeCompare(a.createdAt):s==='oldest'?a.createdAt.localeCompare(b.createdAt):shuffleScore(a)-shuffleScore(b));index=Math.max(0,list.findIndex(c=>c.id===old));show()}
 function show(){const c=current();$('count').textContent=list.length?(index+1)+' / '+list.length:'0 clips';$('player').replaceChildren();if(!c){$('title').textContent='All caught up';$('meta').textContent='';return}
 const frame=document.createElement('iframe');frame.allow='autoplay; fullscreen; picture-in-picture';frame.allowFullscreen=true;frame.title=c.title;frame.src='https://clips.twitch.tv/embed?clip='+encodeURIComponent(c.id)+'&parent='+encodeURIComponent(location.hostname)+'&autoplay=false';$('player').append(frame);
 $('title').textContent=c.title;$('meta').textContent='by '+c.clipper+' · '+c.createdAt.slice(0,10);$('open-twitch').href='https://www.twitch.tv/llivvv_xo/clip/'+encodeURIComponent(c.id);
