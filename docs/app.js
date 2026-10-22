@@ -7,7 +7,7 @@ function apiUrl(path) {
   return API_ROOT + path;
 }
 const $=id=>document.getElementById(id);
-const store={clips:[], mine:new Map(), list:[], current:null, access:'', name:'', busy:false};
+const store={clips:[], mine:new Map(), list:[], current:null, name:'', busy:false};
 const choices=['include','maybe','skip'];
 let toastTimeout;
 const savedId=localStorage.getItem('liv_reviewer_id');
@@ -18,16 +18,15 @@ function fmtDate(date){const d=new Date(date.replace(' ','T')+'Z');return Number
 function fmtTime(n){const v=Math.round(Number(n)||0);return `${Math.floor(v/60)}:${String(v%60).padStart(2,'0')}`;}
 function make(tag,cls,txt){const el=document.createElement(tag);if(cls)el.className=cls;if(txt!==undefined)el.textContent=txt;return el;}
 async function api(path,options={}){
- const res=await fetch(apiUrl(path),{...options,headers:{'X-Access-Code':store.access,'X-Reviewer-Id':reviewerId,...options.headers}});
+ const res=await fetch(apiUrl(path),{...options,headers:{'X-Reviewer-Id':reviewerId,...options.headers}});
  let body;try{body=await res.json();}catch{throw new Error('Server unavailable. Please try again.');}
  if(!res.ok)throw new Error(body.error||`Error ${res.status}`);
  return body;
 }
-async function enter(name,access){
- store.name=name.trim();store.access=access;
+async function enter(name){
+ store.name=name.trim();
  const data=await api('/api/bootstrap');
  store.clips=data.clips;store.mine=new Map(data.mine.map(v=>[v.clipId,v]));
- sessionStorage.setItem('liv_access_code',store.access);
  localStorage.setItem('liv_reviewer_name',store.name);
  $('whoami').textContent=store.name;
  $('login').classList.add('hidden');$('main-content').classList.remove('hidden');$('switch-user').classList.remove('hidden');
@@ -110,8 +109,8 @@ async function vote(clipId,choice,note,quick=false){
  finally{store.busy=false;}
 }
 function step(amount){const i=store.list.findIndex(c=>c.id===store.current);const next=store.list[i+amount];if(next)openModal(next.id);}
-$('login-form').addEventListener('submit',async e=>{e.preventDefault();$('login-error').textContent='';const btn=e.currentTarget.querySelector('button');btn.disabled=true;try{await enter($('name').value,$('access-code').value);}catch(err){$('login-error').textContent=err.message;}finally{btn.disabled=false;}});
-$('switch-user').addEventListener('click',()=>{sessionStorage.removeItem('liv_access_code');localStorage.removeItem('liv_reviewer_name');reviewerId=crypto.randomUUID();localStorage.setItem('liv_reviewer_id',reviewerId);store.access='';closeModal();$('login').classList.remove('hidden');$('main-content').classList.add('hidden');$('name').value='';$('access-code').value='';$('switch-user').classList.add('hidden');});
+$('login-form').addEventListener('submit',async e=>{e.preventDefault();$('login-error').textContent='';const btn=e.currentTarget.querySelector('button');btn.disabled=true;try{await enter($('name').value);}catch(err){$('login-error').textContent=err.message;}finally{btn.disabled=false;}});
+$('switch-user').addEventListener('click',()=>{localStorage.removeItem('liv_reviewer_name');reviewerId=crypto.randomUUID();localStorage.setItem('liv_reviewer_id',reviewerId);closeModal();$('login').classList.remove('hidden');$('main-content').classList.add('hidden');$('name').value='';$('switch-user').classList.add('hidden');});
 for(const id of ['search','filter','sort'])$(id).addEventListener(id==='search'?'input':'change',render);
 $('modal-close').addEventListener('click',()=>{closeModal();render();});
 $('modal').addEventListener('click',e=>{if(e.target===$('modal')){closeModal();render();}});
@@ -122,6 +121,5 @@ $('clear-vote').addEventListener('click',()=>{if(store.current)vote(store.curren
 document.addEventListener('keydown',e=>{if($('modal').classList.contains('hidden'))return;if(['INPUT','TEXTAREA'].includes(document.activeElement.tagName))return;if(e.key==='Escape'){closeModal();render();}else if(e.key==='ArrowRight')step(1);else if(e.key==='ArrowLeft')step(-1);else if(['1','2','3'].includes(e.key)){const ch=choices[Number(e.key)-1];vote(store.current,ch,$('note').value);}});
 window.addEventListener('DOMContentLoaded',async()=>{
  $('name').value=localStorage.getItem('liv_reviewer_name')||'';
- const access=sessionStorage.getItem('liv_access_code');
- if(access&&$('name').value){try{await enter($('name').value,access);}catch{sessionStorage.removeItem('liv_access_code');}}
+ if($('name').value){try{await enter($('name').value);}catch{}}
 });
