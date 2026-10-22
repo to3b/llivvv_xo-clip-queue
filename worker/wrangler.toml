@@ -1,0 +1,12 @@
+name = "liv-clip-room-api"
+main = "src.js"
+compatibility_date = "2026-10-01"
+
+[vars]
+# Separate multiple allowed website origins with commas if testing at username.github.io.
+ALLOWED_ORIGINS = "https://llivvv-xo.t-b.es"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "liv-clip-room-db"
+database_id = "REPLACE_WITH_DATABASE_ID"
