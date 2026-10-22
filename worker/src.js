@@ -87,7 +87,7 @@ export default {
     if (req.method === 'OPTIONS') {
       return withCors(new Response(null,{status:204,headers:{
         'Access-Control-Allow-Methods':'GET, POST, OPTIONS',
-        'Access-Control-Allow-Headers':'Content-Type, X-Access-Code, X-Reviewer-Id, X-Admin-Key',
+        'Access-Control-Allow-Headers':'Content-Type, X-Reviewer-Id, X-Admin-Key',
         'Access-Control-Max-Age':'600'
       }}),approvedOrigin);
     }
@@ -95,18 +95,16 @@ export default {
     const pathname = new URL(req.url).pathname;
     try {
       if (pathname === '/health' && req.method === 'GET') return reply({ok:true,clips:clips.length});
-      if (!env.REVIEW_CODE || !env.ADMIN_KEY || env.REVIEW_CODE === env.ADMIN_KEY) {
+      if (!env.ADMIN_KEY) {
         return reply({error:'Backend credentials have not been configured'},503);
       }
       if (pathname === '/api/bootstrap' && req.method === 'GET') {
-        if (!await matches(req.headers.get('X-Access-Code'),env.REVIEW_CODE)) return reply({error:'Invalid mod access code'},401);
         const id=req.headers.get('X-Reviewer-Id');
         if (!isId(id)) return reply({error:'Missing reviewer ID'},400);
         const results=await env.DB.prepare('SELECT clip_id, choice, note FROM reviews WHERE reviewer_id = ?').bind(id).all();
         return reply({clips,mine:(results.results||[]).map(r=>({clipId:r.clip_id,choice:r.choice,note:r.note}))});
       }
       if (pathname === '/api/review' && req.method === 'POST') {
-        if (!await matches(req.headers.get('X-Access-Code'),env.REVIEW_CODE)) return reply({error:'Invalid mod access code'},401);
         const id=req.headers.get('X-Reviewer-Id');
         if (!isId(id)) return reply({error:'Invalid reviewer ID'},400);
         if (Number(req.headers.get('Content-Length')||0)>12000) return reply({error:'Request too large'},413);
