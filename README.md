@@ -84,7 +84,7 @@ ALLOWED_ORIGINS = "https://llivvv-xo.t-b.es,https://YOURUSERNAME.github.io"
 
 Run `npx wrangler deploy` after changing it. The setting takes **origins**, not full page paths; don't append `/liv-clip-room`.
 
-**Don't use `*` for CORS.** The Worker separately checks the mod code/admin password, but restricting origins helps ensure it is used from your own website.
+**Don't use `*` for CORS.** The Worker separately checks the admin password, but restricting origins helps reduce casual cross-site requests.
 
 ## 4. Point `llivvv-xo.t-b.es` to GitHub Pages
 
@@ -119,7 +119,7 @@ Once DNS is configured, the site URL should be **https://llivvv-xo.t-b.es/** and
 4. Open **`/admin.html`**, enter your **admin password**, and check that one Include appears with the mod's name and comment.
 5. Click **Export CSV** and confirm that it includes the clip link and comment.
 6. Check the mod page from a phone. Twitch embedded playback is not reliable in all mobile browsers, so the **Open on Twitch** link is also provided.
-7. **Only share in mod chat after Liv agrees.** Share the website URL and mod code separately; never share the admin password.
+7. **Only share in mod chat after Liv agrees.** Share only the website URL; never share the admin password.
 
 ## Reviewing and administering
 
@@ -156,8 +156,7 @@ Once DNS is configured, the site URL should be **https://llivvv-xo.t-b.es/** and
 The Worker has no real credentials in the repo. For local testing, you can add a **private** file named `worker/.dev.vars` (already gitignored):
 
 ```
-REVIEW_CODE=choose-a-private-local-mod-code
-ADMIN_KEY=choose-a-different-private-local-admin-password
+ADMIN_KEY=choose-a-private-local-admin-password
 ```
 
 Run `npx wrangler d1 execute liv-clip-room-db --local --file=./schema.sql`, then `npx wrangler dev` inside `worker/`. In `wrangler.toml`, add `http://localhost:8000` temporarily to `ALLOWED_ORIGINS`. Serve the `docs/` folder locally using `python -m http.server 8000` and change `docs/api-config.js` *locally* to `http://localhost:8787` for this test only (the frontend accepts an HTTP Worker address for localhost testing). Do not commit local testing credentials or temporary settings.
@@ -173,7 +172,7 @@ npm test
 
 - **“Backend not configured yet”**: edit `docs/api-config.js`, commit and wait for Pages to redeploy.
 - **“Failed to fetch” on login**: check the Worker URL, HTTPS, and `ALLOWED_ORIGINS` (including correct spelling of the domain). Browser devtools Network tab can identify CORS problems.
-- **401 error**: wrong access code or admin password.
+- **401 error**: wrong admin password.
 - **503 error**: missing Worker secrets or the secrets are identical.
 - **500 error**: missing D1 binding, missing `schema.sql` tables, or an API error. Check Worker logs with `npx wrangler tail`.
 - **Twitch iframe blank**: open the clip on Twitch using the direct link. Twitch has embedding/browser restrictions.
