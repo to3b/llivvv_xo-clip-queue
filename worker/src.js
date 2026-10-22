@@ -95,9 +95,6 @@ export default {
     const pathname = new URL(req.url).pathname;
     try {
       if (pathname === '/health' && req.method === 'GET') return reply({ok:true,clips:clips.length});
-      if (!env.ADMIN_KEY) {
-        return reply({error:'Backend credentials have not been configured'},503);
-      }
       if (pathname === '/api/bootstrap' && req.method === 'GET') {
         const id=req.headers.get('X-Reviewer-Id');
         if (!isId(id)) return reply({error:'Missing reviewer ID'},400);
@@ -111,7 +108,7 @@ export default {
         let body;
         try {const raw=await req.text(); if(raw.length>12000) return reply({error:'Request too large'},413); body=JSON.parse(raw);} catch {return reply({error:'Invalid JSON'},400);}
         if (!body || typeof body !== 'object') return reply({error:'Invalid request'},400);
-        const name=typeof body.name==='string'?body.name.trim():'';
+        const name=(typeof body.name==='string'?body.name.trim():'') || 'Anonymous';
         const note=typeof body.note==='string'?body.note.trim():'';
         if (name.length<1 || name.length>32) return reply({error:'Name must be 1–32 characters'},400);
         if (!clipById.has(body.clipId)) return reply({error:'Unknown clip'},400);
@@ -129,6 +126,7 @@ export default {
         return reply({ok:true});
       }
       if (pathname === '/api/admin/results' && req.method === 'GET') {
+        if (!env.ADMIN_KEY) return reply({error:'Admin password not configured. Set ADMIN_KEY in Cloudflare.'},503);
         if (!await matches(req.headers.get('X-Admin-Key'),env.ADMIN_KEY)) return reply({error:'Invalid admin password'},401);
         return reply(summarise(await getReviews(env)));
       }
