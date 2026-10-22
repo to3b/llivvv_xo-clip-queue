@@ -24,11 +24,12 @@ async function api(path,options={}){
  return body;
 }
 async function enter(name){
- store.name=name.trim();
+ store.name=name.trim() || 'Anonymous';
  const data=await api('/api/bootstrap');
  store.clips=data.clips;store.mine=new Map(data.mine.map(v=>[v.clipId,v]));
- localStorage.setItem('liv_reviewer_name',store.name);
- $('whoami').textContent=store.name;
+ if(name.trim()) localStorage.setItem('liv_reviewer_name',store.name);
+ else localStorage.removeItem('liv_reviewer_name');
+ $('whoami').textContent=store.name === 'Anonymous' ? 'Guest reviewer' : store.name;
  $('login').classList.add('hidden');$('main-content').classList.remove('hidden');$('switch-user').classList.remove('hidden');
  updateProgress();render();
 }
