@@ -8,6 +8,10 @@ function apiUrl(path) {
 }
 const $=id=>document.getElementById(id);
 let adminKey='',all=[],reviewers=[];
+const aliasKey='liv_admin_reviewer_aliases';
+let aliases={};try{aliases=JSON.parse(localStorage.getItem(aliasKey)||'{}')||{}}catch{aliases={}}
+function displayName(p){return aliases[p.id]||p.name}
+
 let timer;
 function elem(tag,cls,text){const el=document.createElement(tag);if(cls)el.className=cls;if(text!==undefined)el.textContent=text;return el;}
 function notify(t){$('toast').textContent=t;$('toast').classList.remove('hidden');clearTimeout(timer);timer=setTimeout(()=>$('toast').classList.add('hidden'),3000);}
@@ -23,8 +27,10 @@ async function load(){const result=await (await request('/api/admin/results')).j
  $('stat-mods').textContent=reviewers.length;
  const frag=document.createDocumentFragment();
  if(!reviewers.length)frag.append(elem('div','muted','No reviews yet. Once mods start reviewing, they’ll appear here.'));
- for(const p of reviewers){const card=elem('div','reviewer-card');const avatar=elem('div','avatar',p.name.slice(0,1).toUpperCase());
- const detail=elem('div');detail.append(elem('strong','',p.name),elem('small','',`${p.total} reviewed · ${p.include} include · ${p.maybe} maybe`));card.append(avatar,detail);frag.append(card);}
+ for(const p of reviewers){const card=elem('div','reviewer-card');const avatar=elem('div','avatar',displayName(p).slice(0,1).toUpperCase());
+ const detail=elem('div');detail.append(elem('strong','',displayName(p)),elem('small','',`${p.total} reviewed · ${p.include} include · ${p.maybe} maybe`));
+ const edit=elem('button','text-button','Rename');edit.type='button';edit.title='Rename this reviewer on this browser';edit.addEventListener('click',()=>{const value=prompt('Display name for '+p.name+' (blank to reset):',aliases[p.id]||p.name);if(value===null)return;const clean=value.trim();if(clean&&clean.length>50){notify('Name must be 50 characters or fewer');return;}if(!clean||clean===p.name)delete aliases[p.id];else aliases[p.id]=clean;localStorage.setItem(aliasKey,JSON.stringify(aliases));load().catch(e=>notify(e.message));});
+ card.append(avatar,detail,edit);frag.append(card);}
  $('reviewers').replaceChildren(frag);render();}
 function selected(){const q=$('admin-search').value.toLowerCase().trim(),filter=$('admin-filter').value,sort=$('admin-sort').value;
  let rows=all.filter(c=>{
