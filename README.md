@@ -45,11 +45,10 @@ npx wrangler d1 execute liv-clip-room-db --remote --file=./schema.sql
 Set a **separate strong secret for each audience** (these commands will ask you to type or paste the values; they are stored by Cloudflare and **not** in GitHub):
 
 ```sh
-npx wrangler secret put REVIEW_CODE
 npx wrangler secret put ADMIN_KEY
 ```
 
-Use a long, unguessable **mod access code** and a **different, stronger admin password**. Don't put either in `docs/api-config.js`, `wrangler.toml`, screenshots, Discord public channels, or GitHub commits.
+Use a long, unguessable **admin password**. Mod reviewers do not need a password. Don't put it in `docs/api-config.js`, `wrangler.toml`, screenshots, Discord public channels, or GitHub commits.
 
 Deploy the API:
 
